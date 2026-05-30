@@ -626,6 +626,18 @@ impl<'ll, 'tcx> FnAbiLlvmExt<'ll, 'tcx> for FnAbi<'tcx, Ty<'tcx>> {
         let cconv = self.llvm_cconv(&bx.cx);
         if cconv != llvm::CCallConv {
             llvm::SetInstructionCallConv(callsite, cconv);
+        } else {
+            let target_cpu = attributes::target_cpu_attr(&bx.cx, bx.cx.sess());
+            attributes::apply_to_callsite(
+                callsite,
+                llvm::AttributePlace::Function,
+                &[target_cpu],
+            );
+            attributes::apply_to_callsite(
+                callsite,
+                llvm::AttributePlace::Function,
+                attributes::target_features_attr(bx, bx.cx.tcx, vec![]).as_slice(),
+            );
         }
 
         if self.conv == CanonAbi::Arm(ArmCall::CCmseNonSecureCall) {
